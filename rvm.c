@@ -21,16 +21,20 @@ typedef struct
 	int value;
 } Inst;
 
+#define DEF_INST_PUSH(x) {.type = INST_PUSH, .value = x}
+#define DEF_INST_POP() {.type = INST_POP}
+#define DEF_INST_ADD() {.type = INST_ADD}
+#define DEF_INST_SUB() {.type = INST_SUB}
+#define DEF_INST_MUL() {.type = INST_MUL}
+#define DEF_INST_DIV() {.type = INST_DIV}
+#define DEF_INST_PRINT() {.type = INST_PRINT}
+
 Inst program[] = {
-	{.type = INST_PUSH,
-	 .value = 11},
-	{.type = INST_PUSH,
-	 .value = 13},
-	{.type = INST_PUSH,
-	 .value = 15},
-	{.type = INST_PUSH,
-	 .value = 17},
-	// {.type = INST_PRINT},
+	DEF_INST_PUSH(11),
+	DEF_INST_PUSH(13),
+	DEF_INST_PUSH(15),
+	DEF_INST_PUSH(17),
+	DEF_INST_PRINT(),
 };
 
 #define PROGRAM_SIZE (sizeof(program) / sizeof(program[0]))
@@ -101,11 +105,12 @@ int main()
 			push(a * b);
 			break;
 		case INST_PRINT:
-			printf("%d\n", pop());
+			print_stack();
+			// printf("%d\n", pop());
 			break;
 		}
 	}
 
-	print_stack();
+	// print_stack();
 	return 0;
 }
