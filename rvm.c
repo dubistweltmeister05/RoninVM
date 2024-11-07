@@ -4,6 +4,8 @@
 #include <string.h>
 #include <assert.h>
 
+#define MAX_STACK_SIZE 1024
+int stack[MAX_STACK_SIZE];
 typedef enum
 {
 	INST_PUSH,
@@ -21,6 +23,13 @@ typedef struct
 	int value;
 } Inst;
 
+typedef struct
+{
+	int stack[MAX_STACK_SIZE];
+	int stack_size; // this has been changed by us
+	size_t program_size;
+	Inst *instructions;
+} Machine;
 #define DEF_INST_PUSH(x) {.type = INST_PUSH, .value = x}
 #define DEF_INST_POP() {.type = INST_POP}
 #define DEF_INST_ADD() {.type = INST_ADD}
@@ -30,49 +39,45 @@ typedef struct
 #define DEF_INST_PRINT() {.type = INST_PRINT}
 
 Inst program[] = {
-	DEF_INST_PUSH(11),
-	DEF_INST_PUSH(13),
-	DEF_INST_PUSH(15),
-	DEF_INST_PUSH(17),
-	DEF_INST_PRINT(),
+	DEF_INST_PUSH(5),
+	DEF_INST_PUSH(5),
+	// DEF_INST_ADD(),
 };
 
 #define PROGRAM_SIZE (sizeof(program) / sizeof(program[0]))
-#define MAX_STACK_SIZE 1024
-int stack[MAX_STACK_SIZE];
-int stack_size = 0; // this has been changed by us
 
-void push(int val)
+void push(Machine *machine, int val)
 {
-	if (stack_size >= MAX_STACK_SIZE)
+	if (machine->stack_size >= MAX_STACK_SIZE)
 	{
 		fprintf(stderr, "ERROR : STACK OVERFLOW\n");
 		exit(1);
 	}
-	stack[stack_size] = val;
-	stack_size++;
+	machine->stack[machine->stack_size] = val;
+	machine->stack_size++;
 }
 
-int pop()
+int pop(Machine *machine)
 {
-	if (stack_size <= 0)
+	if (machine->stack_size <= 0)
 	{
 		fprintf(stderr, "ERROR : STACK UNDERFLOW\n");
 		exit(1);
 	}
-	return stack[--stack_size];
+	machine->stack_size--;
+	return machine->stack[machine->stack_size];
 }
 
-void print_stack()
+void print_stack(Machine *machine)
 {
-	printf("This is what the stack contains for far\n");
-	for (int temp = stack_size - 1; temp >= 0; temp--)
+	// printf("This is what the stack contains for far\n");
+	for (int temp = machine->stack_size - 1; temp >= 0; temp--)
 	{
 		printf("%d\n", stack[temp]);
 	}
 }
 
-void write_prog_to_file(char *file_path)
+void write_prog_to_file(Machine *machine, char *file_path)
 {
 	FILE *file = fopen(file_path, "wb");
 	if (file == NULL)
@@ -80,12 +85,12 @@ void write_prog_to_file(char *file_path)
 		fprintf(stderr, "Error : Could not write to the file%s\n", file_path);
 		exit(1);
 	}
-	fwrite(program, sizeof program[0], PROGRAM_SIZE, file);
+	fwrite(machine->instructions, sizeof machine->instructions[0], PROGRAM_SIZE, file);
 
 	fclose(file);
 }
 
-Inst *read_from_file(char *file_path)
+Machine *read_from_file(Machine *machine, char *file_path)
 {
 	FILE *file = fopen(file_path, "rb");
 
@@ -95,59 +100,64 @@ Inst *read_from_file(char *file_path)
 		exit(1);
 	}
 	Inst *instructions = malloc(sizeof(Inst) * MAX_STACK_SIZE);
+	// Machine * machine = malloc(sizeof(Machine));
 
 	fseek(file, 0, SEEK_END);
 	int length = ftell(file);
 	fseek(file, 0, SEEK_SET);
 
-	fread(instructions, sizeof(instructions[0]), length, file);
+	fread(instructions, sizeof(instructions[0]), length / 8, file);
+	machine->program_size = length / 8;
 
 	fclose(file);
 	printf("File_Read is a success\n");
-	return instructions;
+	return (machine);
 }
 int main()
 {
 	int a, b;
-	write_prog_to_file("test.rvm");
-	Inst *loaded_program = read_from_file("test.rvm");
-	for (size_t ip = 0; ip < PROGRAM_SIZE; ip++)
+	Machine *loaded_machine = malloc(sizeof(Machine) * MAX_STACK_SIZE);
+	loaded_machine->instructions = program;
+	write_prog_to_file(loaded_machine, "test.rvm");
+	loaded_machine = read_from_file(loaded_machine, "test.rvm");
+
+	for (size_t ip = 0; ip < loaded_machine->program_size; ip++)
 	{
-		switch (loaded_program[ip].type)
+		switch (loaded_machine->instructions[ip].type)
 		{
 		case INST_PUSH:
-			push(loaded_program[ip].value);
+			push(loaded_machine, loaded_machine->instructions[ip].value);
 			break;
 		case INST_POP:
-			pop();
+			pop(loaded_machine);
 			break;
 		case INST_ADD:
-			a = pop();
-			b = pop();
-			push(a + b);
+			a = pop(loaded_machine);
+			b = pop(loaded_machine);
+			push(loaded_machine, a + b);
 			break;
 		case INST_SUB:
-			a = pop();
-			b = pop();
-			push(a - b);
+			a = pop(loaded_machine);
+			b = pop(loaded_machine);
+			push(loaded_machine, a - b);
 			break;
 		case INST_DIV:
-			a = pop();
-			b = pop();
-			push(a / b);
+			a = pop(loaded_machine);
+			b = pop(loaded_machine);
+			push(loaded_machine, a / b);
 			break;
 		case INST_MUL:
-			a = pop();
-			b = pop();
-			push(a * b);
+			a = pop(loaded_machine);
+			b = pop(loaded_machine);
+			push(loaded_machine, a * b);
 			break;
 		case INST_PRINT:
-			print_stack();
-			// printf("%d\n", pop());
+			print_stack(loaded_machine);
+			printf("%d\n", pop(loaded_machine));
 			break;
 		}
 	}
 
-	// print_stack();
+	print_stack(loaded_machine);
 	return 0;
 }
