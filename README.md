@@ -77,5 +77,3 @@ The VM will handle:
 ## Contributing
 Feel free to open issues, submit pull requests, or suggest improvements. Contributions are welcome!
 
-## License
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more information.
