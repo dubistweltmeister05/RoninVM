@@ -16,6 +16,12 @@ typedef enum
 	INST_DUP,
 	INST_SWAP,
 	INST_DIV,
+	INST_CMPE,
+	INST_CMPNE,
+	INST_CMPG,
+	INST_CMPL,
+	INST_CJMP,
+	INST_JMP,
 	INST_PRINT,
 } Inst_set;
 
@@ -23,6 +29,7 @@ typedef struct
 {
 	Inst_set type;
 	int value;
+	int x;
 } Inst;
 
 typedef struct
@@ -31,6 +38,7 @@ typedef struct
 	int stack_size; // this has been changed by us
 	size_t program_size;
 	Inst *instructions;
+
 } Machine;
 #define DEF_INST_PUSH(x) {.type = INST_PUSH, .value = x}
 #define DEF_INST_POP() {.type = INST_POP}
@@ -38,20 +46,25 @@ typedef struct
 #define DEF_INST_DUP() {.type = INST_DUP}
 #define DEF_INST_SUB() {.type = INST_SUB}
 #define DEF_INST_MUL() {.type = INST_MUL}
+#define DEF_INST_CMPE() {.type = INST_CMPE}
+#define DEF_INST_CMPG() {.type = INST_CMPG}
+#define DEF_INST_CMPL() {.type = INST_CMPL}
+#define DEF_INST_CMPNE() {.type = INST_CMPNE}
+#define DEF_INST_CJMP(x) {.type = INST_CJMP, .value = x}
+#define DEF_INST_JMP(x) {.type = INST_JMP, .value = x}
 #define DEF_INST_DIV() {.type = INST_DIV}
 #define DEF_INST_SWAP() {.type = INST_SWAP}
 #define DEF_INST_PRINT() {.type = INST_PRINT}
 
 Inst program[] = {
 	DEF_INST_PUSH(1),
+	DEF_INST_PUSH(1),
+	DEF_INST_CMPE(),
+	DEF_INST_CJMP(6),
 	DEF_INST_PUSH(2),
-	DEF_INST_PUSH(3),
-	DEF_INST_PUSH(4),
-	DEF_INST_PUSH(5),
-	DEF_INST_SWAP(),
 	DEF_INST_ADD(),
-	DEF_INST_SWAP(),
-	// DEF_INST_PRINT(),
+	DEF_INST_PUSH(4),
+	DEF_INST_PRINT(),
 };
 
 #define PROGRAM_SIZE (sizeof(program) / sizeof(program[0]))
@@ -81,10 +94,12 @@ int pop(Machine *machine)
 void print_stack(Machine *machine)
 {
 	// printf("This is what the stack contains for far\n");
+	printf("---------Stack---------\n");
 	for (int temp = machine->stack_size - 1; temp >= 0; temp--)
 	{
 		printf("%d\n", machine->stack[temp]);
 	}
+	printf("---------End of Stack---------\n");
 }
 
 void write_prog_to_file(Machine *machine, char *file_path)
@@ -133,6 +148,7 @@ int main()
 
 	for (size_t ip = 0; ip < loaded_machine->program_size; ip++)
 	{
+		// print_stack(loaded_machine);
 		switch (loaded_machine->instructions[ip].type)
 		{
 		case INST_PUSH:
@@ -177,6 +193,60 @@ int main()
 			push(loaded_machine, a);
 			push(loaded_machine, b);
 			break;
+		case INST_CMPE:
+			a = pop(loaded_machine);
+			b = pop(loaded_machine);
+			push(loaded_machine, b);
+			push(loaded_machine, a);
+			push(loaded_machine, (a == b ? 1 : 0));
+			break;
+		case INST_CMPG:
+			a = pop(loaded_machine);
+			b = pop(loaded_machine);
+			push(loaded_machine, b);
+			push(loaded_machine, a);
+			push(loaded_machine, (a > b ? 1 : 0));
+			break;
+		case INST_CMPL:
+			a = pop(loaded_machine);
+			b = pop(loaded_machine);
+			push(loaded_machine, b);
+			push(loaded_machine, a);
+			push(loaded_machine, (a < b ? 1 : 0));
+			break;
+		case INST_CMPNE:
+			a = pop(loaded_machine);
+			b = pop(loaded_machine);
+			push(loaded_machine, b);
+			push(loaded_machine, a);
+			push(loaded_machine, (a == b ? 0 : 1));
+			break;
+
+		case INST_CJMP:
+			if (pop(loaded_machine) == 1)
+			{
+				printf("IP: %zu\n", ip);
+				ip = loaded_machine->instructions[ip].value - 1;
+				if (ip >= loaded_machine->program_size)
+				{
+					fprintf(stderr, "ERROR: Jumping out of bounds\n");
+					exit(1);
+				}
+				printf("IP: %zu\n", ip);
+			}
+			else
+			{
+				continue;
+			}
+			break;
+		case INST_JMP:
+			ip = loaded_machine->instructions[ip].value - 1;
+			if (ip + 1 >= loaded_machine->program_size)
+			{
+				fprintf(stderr, "ERROR: Jumping out of bounds\n");
+				exit(1);
+			}
+			break;
 		case INST_PRINT:
 			print_stack(loaded_machine);
 			printf("%d\n", pop(loaded_machine));
@@ -184,6 +254,6 @@ int main()
 		}
 	}
 
-	print_stack(loaded_machine);
+	// print_stack(loaded_machine);
 	return 0;
 }
