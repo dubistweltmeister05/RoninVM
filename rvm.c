@@ -8,6 +8,7 @@
 // int stack[MAX_STACK_SIZE];
 typedef enum
 {
+	INST_NOP = 0,
 	INST_PUSH,
 	INST_POP,
 	INST_ADD,
@@ -16,10 +17,13 @@ typedef enum
 	INST_DUP,
 	INST_SWAP,
 	INST_DIV,
+	INST_MOD,
 	INST_CMPE,
 	INST_CMPNE,
 	INST_CMPG,
 	INST_CMPL,
+	INST_CMPGE,
+	INST_CMPLE,
 	INST_CJMP,
 	INST_JMP,
 	INST_PRINT,
@@ -40,6 +44,8 @@ typedef struct
 	Inst *instructions;
 
 } Machine;
+
+#define DEF_INST_NOP(x) {.type = INST_NOP}
 #define DEF_INST_PUSH(x) {.type = INST_PUSH, .value = x}
 #define DEF_INST_POP() {.type = INST_POP}
 #define DEF_INST_ADD() {.type = INST_ADD}
@@ -49,21 +55,28 @@ typedef struct
 #define DEF_INST_CMPE() {.type = INST_CMPE}
 #define DEF_INST_CMPG() {.type = INST_CMPG}
 #define DEF_INST_CMPL() {.type = INST_CMPL}
+#define DEF_INST_CMPGE() {.type = INST_CMPGE}
+#define DEF_INST_CMPLE() {.type = INST_CMPLE}
 #define DEF_INST_CMPNE() {.type = INST_CMPNE}
 #define DEF_INST_CJMP(x) {.type = INST_CJMP, .value = x}
 #define DEF_INST_JMP(x) {.type = INST_JMP, .value = x}
 #define DEF_INST_DIV() {.type = INST_DIV}
 #define DEF_INST_SWAP() {.type = INST_SWAP}
+#define DEF_INST_MOD() {.type = INST_MOD}
 #define DEF_INST_PRINT() {.type = INST_PRINT}
 
 Inst program[] = {
-	DEF_INST_PUSH(1),
-	DEF_INST_PUSH(1),
-	DEF_INST_CMPE(),
-	DEF_INST_CJMP(6),
-	DEF_INST_PUSH(2),
-	DEF_INST_ADD(),
-	DEF_INST_PUSH(4),
+	DEF_INST_PUSH(3),
+	DEF_INST_JMP(6),
+	DEF_INST_PUSH(15),
+	DEF_INST_NOP(1),
+	DEF_INST_NOP(1),
+	DEF_INST_CMPLE(),
+	// DEF_INST_CMPG(),
+	// DEF_INST_JMP(6),
+	// DEF_INST_PUSH(2),
+	// DEF_INST_ADD(),
+	// DEF_INST_PUSH(4),
 	DEF_INST_PRINT(),
 };
 
@@ -151,6 +164,9 @@ int main()
 		// print_stack(loaded_machine);
 		switch (loaded_machine->instructions[ip].type)
 		{
+		case INST_NOP:
+			continue;
+			break;
 		case INST_PUSH:
 			push(loaded_machine, loaded_machine->instructions[ip].value);
 			break;
@@ -181,6 +197,16 @@ int main()
 				exit(1);
 			}
 			push(loaded_machine, a / b);
+			break;
+		case INST_MOD:
+			a = pop(loaded_machine);
+			b = pop(loaded_machine);
+			if (b == 0)
+			{
+				fprintf(stderr, "ERROR: CANNOT DIVIDE BY 0");
+				exit(1);
+			}
+			push(loaded_machine, a % b);
 			break;
 		case INST_MUL:
 			a = pop(loaded_machine);
@@ -214,6 +240,20 @@ int main()
 			push(loaded_machine, a);
 			push(loaded_machine, (a < b ? 1 : 0));
 			break;
+		case INST_CMPGE:
+			a = pop(loaded_machine);
+			b = pop(loaded_machine);
+			push(loaded_machine, b);
+			push(loaded_machine, a);
+			push(loaded_machine, (a >= b ? 1 : 0));
+			break;
+		case INST_CMPLE:
+			a = pop(loaded_machine);
+			b = pop(loaded_machine);
+			push(loaded_machine, b);
+			push(loaded_machine, a);
+			push(loaded_machine, (a <= b ? 1 : 0));
+			break;
 		case INST_CMPNE:
 			a = pop(loaded_machine);
 			b = pop(loaded_machine);
@@ -227,7 +267,7 @@ int main()
 			{
 				printf("IP: %zu\n", ip);
 				ip = loaded_machine->instructions[ip].value - 1;
-				if (ip >= loaded_machine->program_size)
+				if (ip + 1 >= loaded_machine->program_size)
 				{
 					fprintf(stderr, "ERROR: Jumping out of bounds\n");
 					exit(1);
@@ -254,6 +294,6 @@ int main()
 		}
 	}
 
-	// print_stack(loaded_machine);
+	print_stack(loaded_machine);
 	return 0;
 }
