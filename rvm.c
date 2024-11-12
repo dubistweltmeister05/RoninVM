@@ -5,7 +5,7 @@
 #include <assert.h>
 
 #define MAX_STACK_SIZE 1024
-int stack[MAX_STACK_SIZE];
+// int stack[MAX_STACK_SIZE];
 typedef enum
 {
 	INST_PUSH,
@@ -13,6 +13,8 @@ typedef enum
 	INST_ADD,
 	INST_SUB,
 	INST_MUL,
+	INST_DUP,
+	INST_SWAP,
 	INST_DIV,
 	INST_PRINT,
 } Inst_set;
@@ -33,15 +35,23 @@ typedef struct
 #define DEF_INST_PUSH(x) {.type = INST_PUSH, .value = x}
 #define DEF_INST_POP() {.type = INST_POP}
 #define DEF_INST_ADD() {.type = INST_ADD}
+#define DEF_INST_DUP() {.type = INST_DUP}
 #define DEF_INST_SUB() {.type = INST_SUB}
 #define DEF_INST_MUL() {.type = INST_MUL}
 #define DEF_INST_DIV() {.type = INST_DIV}
+#define DEF_INST_SWAP() {.type = INST_SWAP}
 #define DEF_INST_PRINT() {.type = INST_PRINT}
 
 Inst program[] = {
+	DEF_INST_PUSH(1),
+	DEF_INST_PUSH(2),
+	DEF_INST_PUSH(3),
+	DEF_INST_PUSH(4),
 	DEF_INST_PUSH(5),
-	DEF_INST_PUSH(5),
-	// DEF_INST_ADD(),
+	DEF_INST_SWAP(),
+	DEF_INST_ADD(),
+	DEF_INST_SWAP(),
+	// DEF_INST_PRINT(),
 };
 
 #define PROGRAM_SIZE (sizeof(program) / sizeof(program[0]))
@@ -73,7 +83,7 @@ void print_stack(Machine *machine)
 	// printf("This is what the stack contains for far\n");
 	for (int temp = machine->stack_size - 1; temp >= 0; temp--)
 	{
-		printf("%d\n", stack[temp]);
+		printf("%d\n", machine->stack[temp]);
 	}
 }
 
@@ -110,7 +120,7 @@ Machine *read_from_file(Machine *machine, char *file_path)
 	machine->program_size = length / 8;
 
 	fclose(file);
-	printf("File_Read is a success\n");
+	// printf("File_Read is a success\n");
 	return (machine);
 }
 int main()
@@ -136,6 +146,11 @@ int main()
 			b = pop(loaded_machine);
 			push(loaded_machine, a + b);
 			break;
+		case INST_DUP:
+			a = pop(loaded_machine);
+			push(loaded_machine, a);
+			push(loaded_machine, a);
+			break;
 		case INST_SUB:
 			a = pop(loaded_machine);
 			b = pop(loaded_machine);
@@ -144,12 +159,23 @@ int main()
 		case INST_DIV:
 			a = pop(loaded_machine);
 			b = pop(loaded_machine);
+			if (b == 0)
+			{
+				fprintf(stderr, "ERROR: CANNOT DIVIDE BY 0");
+				exit(1);
+			}
 			push(loaded_machine, a / b);
 			break;
 		case INST_MUL:
 			a = pop(loaded_machine);
 			b = pop(loaded_machine);
 			push(loaded_machine, a * b);
+			break;
+		case INST_SWAP:
+			a = pop(loaded_machine);
+			b = pop(loaded_machine);
+			push(loaded_machine, a);
+			push(loaded_machine, b);
 			break;
 		case INST_PRINT:
 			print_stack(loaded_machine);
