@@ -1,5 +1,5 @@
 
-# Stack-Based Virtual Machine (VM)
+# RoninVM
 
 This project is a simple stack-based virtual machine (VM) implemented in C. The VM can interpret and execute a set of basic instructions like arithmetic operations, conditional jumps, and stack manipulations, allowing you to simulate a basic computing environment.
 
