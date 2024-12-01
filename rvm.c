@@ -27,6 +27,7 @@ typedef enum
 	INST_CJMP,
 	INST_JMP,
 	INST_PRINT,
+	INST_HALT,
 } Inst_set;
 
 typedef struct
@@ -64,15 +65,16 @@ typedef struct
 #define DEF_INST_SWAP() {.type = INST_SWAP}
 #define DEF_INST_MOD() {.type = INST_MOD}
 #define DEF_INST_PRINT() {.type = INST_PRINT}
+#define DEF_INST_HALT() {.type = INST_HALT}
 
 Inst program[] = {
-	DEF_INST_PUSH(1),
-	DEF_INST_PUSH(1),
-	DEF_INST_CMPE(),
-	DEF_INST_CJMP(7),
-	DEF_INST_PUSH(2),
-	DEF_INST_ADD(),
-	DEF_INST_PUSH(4),
+	DEF_INST_PUSH(14),
+	DEF_INST_PUSH(15),
+	DEF_INST_HALT(),
+	DEF_INST_JMP(4),
+	DEF_INST_CMPGE(),
+	DEF_INST_NOP(),
+	DEF_INST_NOP(),
 	DEF_INST_PRINT(),
 };
 
@@ -284,9 +286,12 @@ int main()
 			print_stack(loaded_machine);
 			printf("%d\n", pop(loaded_machine));
 			break;
+		case INST_HALT:
+			ip = loaded_machine->program_size;
+			break;
 		}
 	}
 
-	// print_stack(loaded_machine);
+	print_stack(loaded_machine);
 	return 0;
 }
