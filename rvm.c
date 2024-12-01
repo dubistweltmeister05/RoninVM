@@ -66,17 +66,13 @@ typedef struct
 #define DEF_INST_PRINT() {.type = INST_PRINT}
 
 Inst program[] = {
-	DEF_INST_PUSH(3),
-	DEF_INST_JMP(6),
-	DEF_INST_PUSH(15),
-	DEF_INST_NOP(1),
-	DEF_INST_NOP(1),
-	DEF_INST_CMPLE(),
-	// DEF_INST_CMPG(),
-	// DEF_INST_JMP(6),
-	// DEF_INST_PUSH(2),
-	// DEF_INST_ADD(),
-	// DEF_INST_PUSH(4),
+	DEF_INST_PUSH(1),
+	DEF_INST_PUSH(1),
+	DEF_INST_CMPE(),
+	DEF_INST_CJMP(7),
+	DEF_INST_PUSH(2),
+	DEF_INST_ADD(),
+	DEF_INST_PUSH(4),
 	DEF_INST_PRINT(),
 };
 
@@ -143,10 +139,10 @@ Machine *read_from_file(Machine *machine, char *file_path)
 	fseek(file, 0, SEEK_END);
 	int length = ftell(file);
 	fseek(file, 0, SEEK_SET);
+	length = length - ftell(file);
+	length = fread(instructions, sizeof(*instructions), length, file);
 
-	fread(instructions, sizeof(instructions[0]), length / 8, file);
-	machine->program_size = length / 8;
-
+	machine->program_size = length;
 	fclose(file);
 	// printf("File_Read is a success\n");
 	return (machine);
@@ -261,18 +257,16 @@ int main()
 			push(loaded_machine, a);
 			push(loaded_machine, (a == b ? 0 : 1));
 			break;
-
 		case INST_CJMP:
 			if (pop(loaded_machine) == 1)
 			{
-				printf("IP: %zu\n", ip);
+				// printf("IP: %zu\n", ip);
 				ip = loaded_machine->instructions[ip].value - 1;
 				if (ip + 1 >= loaded_machine->program_size)
 				{
 					fprintf(stderr, "ERROR: Jumping out of bounds\n");
-					exit(1);
 				}
-				printf("IP: %zu\n", ip);
+				// printf("IP: %zu\n", ip);
 			}
 			else
 			{
@@ -284,7 +278,6 @@ int main()
 			if (ip + 1 >= loaded_machine->program_size)
 			{
 				fprintf(stderr, "ERROR: Jumping out of bounds\n");
-				exit(1);
 			}
 			break;
 		case INST_PRINT:
@@ -294,6 +287,6 @@ int main()
 		}
 	}
 
-	print_stack(loaded_machine);
+	// print_stack(loaded_machine);
 	return 0;
 }
