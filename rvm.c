@@ -24,8 +24,9 @@ typedef enum
 	INST_CMPL,
 	INST_CMPGE,
 	INST_CMPLE,
-	INST_CJMP,
 	INST_JMP,
+	INST_ZJMP,
+	INST_NZJMP,
 	INST_PRINT,
 	INST_HALT,
 } Inst_set;
@@ -59,8 +60,9 @@ typedef struct
 #define DEF_INST_CMPGE() {.type = INST_CMPGE}
 #define DEF_INST_CMPLE() {.type = INST_CMPLE}
 #define DEF_INST_CMPNE() {.type = INST_CMPNE}
-#define DEF_INST_CJMP(x) {.type = INST_CJMP, .value = x}
 #define DEF_INST_JMP(x) {.type = INST_JMP, .value = x}
+#define DEF_INST_ZJMP(x) {.type = INST_ZJMP, .value = x}
+#define DEF_INST_NZJMP(x) {.type = INST_NZJMP, .value = x}
 #define DEF_INST_DIV() {.type = INST_DIV}
 #define DEF_INST_SWAP() {.type = INST_SWAP}
 #define DEF_INST_MOD() {.type = INST_MOD}
@@ -69,10 +71,11 @@ typedef struct
 
 Inst program[] = {
 	DEF_INST_PUSH(14),
-	DEF_INST_PUSH(15),
+	DEF_INST_PUSH(0),
+	DEF_INST_ZJMP(6),
 	DEF_INST_HALT(),
-	DEF_INST_JMP(4),
 	DEF_INST_CMPGE(),
+	DEF_INST_NOP(),
 	DEF_INST_NOP(),
 	DEF_INST_NOP(),
 	DEF_INST_PRINT(),
@@ -259,8 +262,24 @@ int main()
 			push(loaded_machine, a);
 			push(loaded_machine, (a == b ? 0 : 1));
 			break;
-		case INST_CJMP:
-			if (pop(loaded_machine) == 1)
+		case INST_NZJMP:
+			if (pop(loaded_machine) != 0)
+			{
+				// printf("IP: %zu\n", ip);
+				ip = loaded_machine->instructions[ip].value - 1;
+				if (ip + 1 >= loaded_machine->program_size)
+				{
+					fprintf(stderr, "ERROR: Jumping out of bounds\n");
+				}
+				// printf("IP: %zu\n", ip);
+			}
+			else
+			{
+				continue;
+			}
+			break;
+		case INST_ZJMP:
+			if (pop(loaded_machine) == 0)
 			{
 				// printf("IP: %zu\n", ip);
 				ip = loaded_machine->instructions[ip].value - 1;
@@ -292,6 +311,6 @@ int main()
 		}
 	}
 
-	print_stack(loaded_machine);
+	// print_stack(loaded_machine);
 	return 0;
 }
