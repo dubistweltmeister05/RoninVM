@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
-
+#include "rvasmlexer.h"
 #include "rvm.h"
 // int stack[MAX_STACK_SIZE];
 
@@ -274,7 +274,7 @@ void run_instructions(Machine *machine)
 };
 int main()
 {
-
+	lexer();
 	Machine *loaded_machine = malloc(sizeof(Machine) * MAX_STACK_SIZE);
 	loaded_machine->instructions = program;
 	write_prog_to_file(loaded_machine, "test.rvm");

@@ -1,5 +1,8 @@
 #ifndef RVM_H
 #define RVM_H
+
+// #include "rvasmlexer.h"
+
 #define MAX_STACK_SIZE 1024
 typedef enum
 {
@@ -69,5 +72,11 @@ typedef struct
 #define DEF_INST_HALT() {.type = INST_HALT}
 
 void push(Machine *machine, int val);
+int pop(Machine *machine);
+void index_swap(Machine *machine, int index);
+void index_dup(Machine *machine, int index);
+void print_stack(Machine *machine);
+void write_prog_to_file(Machine *machine, char *file_path);
+Machine *read_from_file(Machine *machine, char *file_path);
 
 #endif

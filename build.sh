@@ -1,3 +1,3 @@
 set -xe
-gcc rvm.c -o rvm -Wall -Wextra
+gcc rvm.c rvasmlexer.c -o rvm -Wall -Wextra
 
