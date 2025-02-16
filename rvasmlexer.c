@@ -292,7 +292,7 @@ int lexer()
     while (current_index < length)
 
     {
-        if (current[current_index] == "\n")
+        if (current[current_index] == '\n')
         {
             line++;
             character = 0;
